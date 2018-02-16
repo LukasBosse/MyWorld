@@ -1,6 +1,6 @@
 # MyWorld - 2D Minecraft Application
 
-MyWorld is an 2D Minecraft application written in Java.
+MyWorld is an 2D java application based on Minecraft.
 
 ## Table of Contents
 
