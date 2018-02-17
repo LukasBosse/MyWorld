@@ -16,8 +16,8 @@ public class Main extends JFrame implements Runnable {
     private final String TITLE = "MYWORLD";
     private final String VERSION = "0.0.1 ALPHA";
 
-    private final int DISPLAY_WIDTH = 800;
-    private final int DISPLAY_HEIGHT = 600;
+    private final int DISPLAY_WIDTH = 1280;
+    private final int DISPLAY_HEIGHT = 720;
 
     private Thread thread;
     private boolean running;
@@ -40,7 +40,7 @@ public class Main extends JFrame implements Runnable {
         BufferedImage toolboxImg = getTexture("toolbox");
         toolbox = new Toolbox((DISPLAY_WIDTH/2) - (toolboxImg.getWidth()/2),DISPLAY_HEIGHT - (toolboxImg.getHeight()/2) - 35, toolboxImg, false,textureLoader);
         blockList = levelLoader.getLevel();
-        player = new Player(100, 440, getPlayerAnimation(), DISPLAY_WIDTH, toolbox, blockList);
+        player = new Player(100, 440, getPlayerAnimation(), DISPLAY_WIDTH, DISPLAY_HEIGHT, toolbox, blockList);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         addKeyListener(player);
         addMouseListener(player);

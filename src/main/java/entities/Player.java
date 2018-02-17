@@ -15,6 +15,7 @@ import java.util.List;
 public class Player extends Entity implements KeyListener, MouseListener {
 
     private int DISPLAY_WIDTH;
+	private int DISPLAY_HEIGHT;
 
     private enum DIRECTION {
     	LEFT,
@@ -22,39 +23,40 @@ public class Player extends Entity implements KeyListener, MouseListener {
 	};
 
     private DIRECTION direction = DIRECTION.RIGHT;
-    public boolean left, right, destroy;
+    public boolean left, right, jump;
     public boolean click_Left, click_Right;
     private boolean alive = true;
 
     private final int MOVE_SPEED = 1;
     private final int ALLOWED_DISTANCE = 2;
+	private float jumpStrength, weight;
 
     private BufferedImage[] images;
     private Block currentPosition;
 
-    int mouseX = 0;
-    int mouseY = 0;
+    private int mouseX = 0;
+    private int mouseY = 0;
 
     private Toolbox toolbox;
     private List<Block> blockList;
     private Item selectedItem;
 
-    public Player(int x, int y, BufferedImage[] images, int DISPLAY_WIDTH, Toolbox toolbox, List<Block> blockList) {
+    public Player(int x, int y, BufferedImage[] images, int DISPLAY_WIDTH, int DISPLAY_HEIGHT, Toolbox toolbox, List<Block> blockList) {
         super(x, y, images[0]);
         this.images = images;
         this.DISPLAY_WIDTH = DISPLAY_WIDTH;
+        this.DISPLAY_HEIGHT = DISPLAY_HEIGHT;
         this.toolbox = toolbox;
         this.blockList = blockList;
+		weight = 0.01f;
+		currentPosition = getCurrentPosition();
+		this.y = getGround();
     }
 
     public void update() {
         if(left) {
             this.x -= MOVE_SPEED;
-            if(x < 0) {
-                left = false;
-                int delta = 0 - x;
-                this.x += delta;
-            }
+            collisionDetection(0);
 			for(BufferedImage bI : images) {
 				img = bI;
 			}
@@ -64,13 +66,10 @@ public class Player extends Entity implements KeyListener, MouseListener {
             for(BufferedImage bI : images) {
                 img = bI;
             }
-            if((this.x + width) > DISPLAY_WIDTH) {
-                right = false;
-                int delta = (this.x + width) - DISPLAY_WIDTH;
-                this.x -= delta;
-            }
+            collisionDetection(1);
         }
 		currentPosition = getCurrentPosition();
+
         if(isFalling()) {
         	for(int i = 0; i < (getGroundDelta()); i++) {
 				this.y += i;
@@ -80,7 +79,7 @@ public class Player extends Entity implements KeyListener, MouseListener {
         	alive = false;
 		}
 		if(!isAlive()) {
-        	System.out.println("SORRY, YOU ARE DEAD!");
+        	System.out.println("- SORRY, YOU ARE DEAD! -");
         	System.exit(0);
 		}
         if(click_Right) {
@@ -130,15 +129,41 @@ public class Player extends Entity implements KeyListener, MouseListener {
 
     }
 
+    private void collisionDetection(int index) {
+    	if(index == 0) {
+			if(this.x < 0) {
+				left = false;
+				int delta = 0 - this.x;
+				this.x += delta;
+			}
+		} else {
+			if((this.x + width) > DISPLAY_WIDTH) {
+				right = false;
+				int delta = (this.x + width) - DISPLAY_WIDTH;
+				this.x -= delta;
+			}
+		}
+	}
+
     private Block getCurrentPosition() {
 		Iterator<Block> iter = blockList.iterator();
 		while (iter.hasNext()) {
 			Block block = iter.next();
-			if((block.getX()/80) == (x/80) && ((block.getY()/80) == (y/80)+1)) {
-				return block;
+			int displayHeight = (DISPLAY_HEIGHT / 80);
+			for(int i = 0; i < displayHeight; i++) {
+				if ((block.getX() / 80) == (x / 80) && ((block.getY() / 80) == (y / 80) + i)) {
+					return block;
+				}
 			}
 		}
 		return null;
+	}
+
+	private int getGround() {
+    	if(currentPosition != null) {
+    		return currentPosition.y - currentPosition.getHeight();
+		}
+		return DISPLAY_HEIGHT-80;
 	}
 
     private int getGroundDelta() {
@@ -173,12 +198,12 @@ public class Player extends Entity implements KeyListener, MouseListener {
         if((key.getKeyCode() == KeyEvent.VK_RIGHT) || (key.getKeyCode() == KeyEvent.VK_D))
             right = true;
 			direction = DIRECTION.RIGHT;
-        if((key.getKeyCode() == KeyEvent.VK_SPACE))
-            destroy = true;
         if((key.getKeyCode() == KeyEvent.VK_ESCAPE))
             System.exit(0);
         if((key.getKeyCode() == KeyEvent.VK_B))
             toolbox.setVisible();
+        if((key.getKeyCode() == KeyEvent.VK_SPACE))
+    		jump = true;
     }
 
     public void keyReleased(KeyEvent key) {
@@ -189,7 +214,7 @@ public class Player extends Entity implements KeyListener, MouseListener {
             right = false;
             img = images[0];
         if((key.getKeyCode() == KeyEvent.VK_SPACE))
-            destroy = false;
+			jump = false;
     }
 
     public void mouseClicked(MouseEvent e) {
