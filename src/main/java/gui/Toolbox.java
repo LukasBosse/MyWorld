@@ -11,20 +11,36 @@ import java.util.List;
 public class Toolbox extends Entity {
 
     private boolean visible;
+    private int MAX_ITEMS;
     private String[] textureList = {
             "Grass_Icon",
-            "Gold_Icon"
+            "Gold_Icon",
+			"Tnt_Icon",
+			"Redstone_Icon",
+			"Leaves_Icon",
+			"Coat_Icon",
+			"Wood_Icon",
+			"Stone_Icon"
     };
 
-    private List<BufferedImage> imgList = new ArrayList<BufferedImage>();
+    private List<Item> itemList = new ArrayList<Item>();
 
     public Toolbox(int x, int y, BufferedImage img, boolean visible, TextureLoader textureLoader) {
 
         super(x, y, img);
         this.visible = visible;
+		MAX_ITEMS = ((this.img.getWidth()/51));
 
-        for(String s : textureList) {
-            imgList.add(textureLoader.getTexture(s));
+        for(int i = 0; i < textureList.length; i++) {
+        	Item item;
+        	BufferedImage buffImg = textureLoader.getTexture(textureList[i]);
+        	BufferedImage originImg = textureLoader.getTexture(textureList[i].split("_")[0]);
+			if(i == 0) {
+				item = new Item(x + 3, y + 2,buffImg, originImg);
+			} else {
+				item = new Item(x + (i * buffImg.getWidth() + 3), y + 2,buffImg,originImg);
+			}
+			itemList.add(item);
         }
 
     }
@@ -32,15 +48,14 @@ public class Toolbox extends Entity {
     @Override
     public void render(Graphics g) {
         g.drawImage(img, x, y, null);
-        for(int i = 0; i < imgList.size(); i++) {
-            BufferedImage buffImg = imgList.get(i);
-            if(i == 0) {
-                g.drawImage(buffImg, x + 3, y + 2, null);
-            } else {
-                g.drawImage(buffImg, x + 3 + (i * buffImg.getWidth() + 3), y + 2, null);
-            }
-        }
+        for(Item i : itemList) {
+        	i.render(g);
+		}
     }
+
+    public List<Item> getItemList() {
+    	return itemList;
+	}
 
     public boolean isVisible() {
         return visible;

@@ -40,7 +40,7 @@ public class Main extends JFrame implements Runnable {
         BufferedImage toolboxImg = getTexture("toolbox");
         toolbox = new Toolbox((DISPLAY_WIDTH/2) - (toolboxImg.getWidth()/2),DISPLAY_HEIGHT - (toolboxImg.getHeight()/2) - 35, toolboxImg, false,textureLoader);
         blockList = levelLoader.getLevel();
-        player = new Player(100, 440, getTexture("player"), DISPLAY_WIDTH, toolbox, blockList);
+        player = new Player(100, 440, getPlayerAnimation(), DISPLAY_WIDTH, toolbox, blockList);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         addKeyListener(player);
         addMouseListener(player);
@@ -82,7 +82,17 @@ public class Main extends JFrame implements Runnable {
         bs.show();
     }
 
-    public BufferedImage getTexture(String key) {
+    private BufferedImage[] getPlayerAnimation() {
+        return new BufferedImage[] {
+			getTexture("player"),
+			getTexture("player_walkA"),
+			getTexture("player_walkB"),
+			getTexture("player_walkC"),
+			getTexture("player_walkD")
+		};
+    }
+
+    private BufferedImage getTexture(String key) {
         return textureLoader.getTexture(key);
     }
 

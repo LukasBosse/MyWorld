@@ -14,9 +14,26 @@ public class TextureLoader {
             "background",
             "Grass",
             "player",
+            "player_walkA",
+            "player_walkB",
+			"player_walkC",
+			"player_walkD",
             "toolbox",
             "Grass_Icon",
-            "Gold_Icon"
+            "Gold_Icon",
+			"Tnt_Icon",
+			"Redstone_Icon",
+			"Coat_Icon",
+			"Stone_Icon",
+			"Leaves_Icon",
+			"Wood_Icon",
+			"Gold",
+			"Tnt",
+			"Redstone",
+			"Coat",
+			"Stone",
+			"Leaves",
+			"Wood"
     };
 
     public TextureLoader() {
