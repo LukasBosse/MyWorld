@@ -33,7 +33,19 @@ public class TextureLoader {
 			"Coat",
 			"Stone",
 			"Leaves",
-			"Wood"
+			"Wood",
+			"explosion0",
+			"explosion1",
+			"explosion2",
+			"explosion3",
+			"explosion4",
+			"explosion5",
+			"explosion6",
+			"explosion7",
+			"explosion8",
+			"explosion9",
+			"explosion10",
+			"explosion11"
     };
 
     public TextureLoader() {

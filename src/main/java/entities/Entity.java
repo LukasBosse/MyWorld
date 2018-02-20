@@ -22,7 +22,7 @@ public class Entity {
     }
 
     public void render(Graphics g) {
-        g.drawImage(img, x, y, null);
+        g.drawImage(getImg(), getX(), getY(), null);
     }
 
     public int getX() {

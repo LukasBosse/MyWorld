@@ -57,10 +57,10 @@ public class LevelLoader {
                 }
             }
             if(i == 0) {
-                blockList.add(new Block(i, calcYPos(lineCounter, img.getHeight()), img));
+                blockList.add(new Block(i, calcYPos(lineCounter, img.getHeight()), img, false, null));
             } else {
                 Block lastItem = blockList.get(blockList.size() - 1);
-                blockList.add(new Block(lastItem.x + lastItem.img.getWidth(), calcYPos(lineCounter, img.getHeight()), img));
+                blockList.add(new Block(lastItem.x + lastItem.img.getWidth(), calcYPos(lineCounter, img.getHeight()), img, false, null));
             }
         }
     }

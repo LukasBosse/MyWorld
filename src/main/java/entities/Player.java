@@ -4,6 +4,7 @@ import gui.Item;
 import gui.Toolbox;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -27,48 +28,70 @@ public class Player extends Entity implements KeyListener, MouseListener {
     public boolean click_Left, click_Right;
     private boolean alive = true;
 
-    private final int MOVE_SPEED = 1;
+    private final int MOVE_SPEED = 2;
     private final int ALLOWED_DISTANCE = 2;
-	private float jumpStrength, weight;
 
-    private BufferedImage[] images;
+    private final float GRAVITY = 0.05f;
+	private float jumpPower = 0;
+
+	private BufferedImage[] images;
     private Block currentPosition;
 
     private int mouseX = 0;
     private int mouseY = 0;
 
+    private int coat = 10;
+    private int tnt = 10;
+    private int gold = 10;
+    private int grass = 10;
+    private int leaves = 10;
+    private int redstone = 10;
+    private int stone = 10;
+
     private Toolbox toolbox;
     private List<Block> blockList;
+    private BufferedImage[] explosionAnimation;
     private Item selectedItem;
 
-    public Player(int x, int y, BufferedImage[] images, int DISPLAY_WIDTH, int DISPLAY_HEIGHT, Toolbox toolbox, List<Block> blockList) {
+    public Player(int x, int y, BufferedImage[] images, int DISPLAY_WIDTH, int DISPLAY_HEIGHT, Toolbox toolbox, List<Block> blockList, BufferedImage[] explosionAnimation) {
         super(x, y, images[0]);
         this.images = images;
         this.DISPLAY_WIDTH = DISPLAY_WIDTH;
         this.DISPLAY_HEIGHT = DISPLAY_HEIGHT;
         this.toolbox = toolbox;
         this.blockList = blockList;
-		weight = 0.01f;
 		currentPosition = getCurrentPosition();
 		this.y = getGround();
+		this.explosionAnimation = explosionAnimation;
+    }
+
+    @Override
+	public void render(Graphics g) {
+    	g.drawImage(img, x, y, null);
+		g.drawString("Stone: " + stone + " | Coat: " + coat + " | TNT: " + tnt + " | Gold: " + gold + " | Grass: " + grass + " | Redstone: " + redstone + " | Leaves: " + leaves, 10,50);
     }
 
     public void update() {
-        if(left) {
+
+    	//WALKING
+    	if(left) {
             this.x -= MOVE_SPEED;
             collisionDetection(0);
-			for(BufferedImage bI : images) {
-				img = bI;
-			}
         }
+
         if(right) {
             this.x += MOVE_SPEED;
-            for(BufferedImage bI : images) {
-                img = bI;
-            }
             collisionDetection(1);
         }
-		currentPosition = getCurrentPosition();
+
+        if(left || right) {
+    		for(BufferedImage bI : images) {
+				img = bI;
+			}
+		}
+
+
+        currentPosition = getCurrentPosition();
 
         if(isFalling()) {
         	for(int i = 0; i < (getGroundDelta()); i++) {
@@ -87,9 +110,9 @@ public class Player extends Entity implements KeyListener, MouseListener {
                 Iterator<Block> iter = blockList.iterator();
                 while (iter.hasNext()) {
                     Block block = iter.next();
-                    if (block.getX() / 80 == mouseX / 80 && block.getY() / 80 == (mouseY / 80)) {
-                        if(((block.getX() / 80) - (x/80)) < ALLOWED_DISTANCE || ((block.getX() / 80) - (x/80)) < ALLOWED_DISTANCE)
-                            iter.remove();
+                    if (block.findBlock(mouseX, mouseY) && block.isinDistance(x,y, ALLOWED_DISTANCE)) {
+                    	iter.remove();
+                    	break;
                     }
                 }
             }
@@ -108,7 +131,6 @@ public class Player extends Entity implements KeyListener, MouseListener {
 
 			//Build block
 			if(selectedItem != null) {
-				Block block = null;
 				if((mouseX > x && direction == DIRECTION.RIGHT) || (mouseX < x && direction == DIRECTION.LEFT)) {
 					Block refBlock = null;
 					Iterator<Block> iter = blockList.iterator();
@@ -118,18 +140,34 @@ public class Player extends Entity implements KeyListener, MouseListener {
 							refBlock = itBlock;
 						}
 					}
-					if(refBlock != null)
-					block = new Block(refBlock.getX(), refBlock.getY() - refBlock.height, selectedItem.getOriginIMG());
+					if(refBlock != null && !alreadyPlaced(refBlock.getX(), refBlock.getY() - refBlock.height)) {
+						blockList.add(new Block(refBlock.getX(), refBlock.getY() - refBlock.height, selectedItem.getOriginIMG(), selectedItem.isExplosive(),explosionAnimation));
+						System.out.println(blockList.size());
+					}
 				}
-				if(block != null)
-				blockList.add(block);
+
 			}
 
         }
 
+        this.bounding.x = x;
+        this.bounding.y = y;
+
     }
 
+    private boolean alreadyPlaced(int x, int y) {
+    	Iterator<Block> iB = blockList.iterator();
+    	while(iB.hasNext()) {
+    		if(iB.next().findBlock(x,y)) {
+    			return true;
+			}
+		}
+		return false;
+	}
+
     private void collisionDetection(int index) {
+
+    	//Check if ran out of map
     	if(index == 0) {
 			if(this.x < 0) {
 				left = false;
@@ -143,6 +181,19 @@ public class Player extends Entity implements KeyListener, MouseListener {
 				this.x -= delta;
 			}
 		}
+
+		//Check collision
+		int yScala = y/80;
+    	for(Block block : blockList) {
+    		if((block.getY()/80) == yScala) {
+    			if(block.getBounding().intersects(getBounding())) {
+    				right = false;
+    				left = false;
+    				this.x = block.getX() - getWidth();
+				}
+			}
+		}
+
 	}
 
     private Block getCurrentPosition() {
@@ -237,6 +288,28 @@ public class Player extends Entity implements KeyListener, MouseListener {
         if(SwingUtilities.isRightMouseButton(e))
             click_Right = false;
     }
+
+	public int getCoat() {
+		return coat;
+	}
+	public int getGold() {
+		return gold;
+	}
+	public int getGrass() {
+		return grass;
+	}
+	public int getLeaves() {
+		return leaves;
+	}
+	public int getRedstone() {
+		return redstone;
+	}
+	public int getStone() {
+		return stone;
+	}
+	public int getTnt() {
+		return tnt;
+	}
 
     public void mouseEntered(MouseEvent e) {
 

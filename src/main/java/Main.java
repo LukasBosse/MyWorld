@@ -9,6 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
+import java.util.Iterator;
 import java.util.List;
 
 public class Main extends JFrame implements Runnable {
@@ -16,8 +17,8 @@ public class Main extends JFrame implements Runnable {
     private final String TITLE = "MYWORLD";
     private final String VERSION = "0.0.1 ALPHA";
 
-    private final int DISPLAY_WIDTH = 1280;
-    private final int DISPLAY_HEIGHT = 720;
+    private final int DISPLAY_WIDTH = 1600;
+    private final int DISPLAY_HEIGHT = 900;
 
     private Thread thread;
     private boolean running;
@@ -40,12 +41,12 @@ public class Main extends JFrame implements Runnable {
         BufferedImage toolboxImg = getTexture("toolbox");
         toolbox = new Toolbox((DISPLAY_WIDTH/2) - (toolboxImg.getWidth()/2),DISPLAY_HEIGHT - (toolboxImg.getHeight()/2) - 35, toolboxImg, false,textureLoader);
         blockList = levelLoader.getLevel();
-        player = new Player(100, 440, getPlayerAnimation(), DISPLAY_WIDTH, DISPLAY_HEIGHT, toolbox, blockList);
+        player = new Player(100, 440, getPlayerAnimation(), DISPLAY_WIDTH, DISPLAY_HEIGHT, toolbox, blockList, generateExplosionAnimation());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         addKeyListener(player);
         addMouseListener(player);
         setLayout(null);
-        setSize(DISPLAY_WIDTH,DISPLAY_HEIGHT);
+       	setSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
         setResizable(false);
         setLocationRelativeTo(null);
         setTitle(TITLE + " - " + VERSION);
@@ -65,14 +66,12 @@ public class Main extends JFrame implements Runnable {
         background.render(g);
 
         //Render blocks
-        for(Block b : blockList) {
-            b.render(g);
-        }
-
+		Iterator<Block> bI = blockList.iterator();
+		while (bI.hasNext()) {
+			bI.next().render(g);
+		}
         //Render player
         player.render(g);
-        //Update player
-        player.update();
 
         //Render toolbox
         if(toolbox.isVisible()) {
@@ -81,6 +80,24 @@ public class Main extends JFrame implements Runnable {
 
         bs.show();
     }
+
+    private BufferedImage[] generateExplosionAnimation() {
+        return new BufferedImage[] {
+                getTexture("explosion0"),
+                getTexture("explosion1"),
+                getTexture("explosion2"),
+                getTexture("explosion3"),
+                getTexture("explosion4"),
+                getTexture("explosion5"),
+                getTexture("explosion6"),
+                getTexture("explosion7"),
+                getTexture("explosion8"),
+                getTexture("explosion9"),
+                getTexture("explosion10"),
+                getTexture("explosion11")
+        };
+    }
+
 
     private BufferedImage[] getPlayerAnimation() {
         return new BufferedImage[] {
@@ -108,7 +125,8 @@ public class Main extends JFrame implements Runnable {
             while (delta >= 1)//Make sure update is only happening 60 times a second
             {
                 //handles all of the logic restricted time
-
+				//Update player
+				player.update();
                 delta--;
             }
             render();//displays to the screen unrestricted time

@@ -11,7 +11,6 @@ import java.util.List;
 public class Toolbox extends Entity {
 
     private boolean visible;
-    private int MAX_ITEMS;
     private String[] textureList = {
             "Grass_Icon",
             "Gold_Icon",
@@ -29,16 +28,17 @@ public class Toolbox extends Entity {
 
         super(x, y, img);
         this.visible = visible;
-		MAX_ITEMS = ((this.img.getWidth()/51));
 
         for(int i = 0; i < textureList.length; i++) {
         	Item item;
         	BufferedImage buffImg = textureLoader.getTexture(textureList[i]);
         	BufferedImage originImg = textureLoader.getTexture(textureList[i].split("_")[0]);
+        	boolean isExplosiv = textureList[i].equals("Tnt_Icon");
+
 			if(i == 0) {
-				item = new Item(x + 3, y + 2,buffImg, originImg);
+				item = new Item(x + 3, y + 2, buffImg, originImg, isExplosiv);
 			} else {
-				item = new Item(x + (i * buffImg.getWidth() + 3), y + 2,buffImg,originImg);
+				item = new Item(x + (i * buffImg.getWidth() + 3), y + 2,buffImg,originImg, isExplosiv);
 			}
 			itemList.add(item);
         }
