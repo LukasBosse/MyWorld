@@ -61,10 +61,8 @@ public class Main extends JFrame implements Runnable {
             return;
         }
         Graphics g = bs.getDrawGraphics();
-
         //Render background
         background.render(g);
-
         //Render blocks
 		Iterator<Block> bI = blockList.iterator();
 		while (bI.hasNext()) {
@@ -72,45 +70,12 @@ public class Main extends JFrame implements Runnable {
 		}
         //Render player
         player.render(g);
-
         //Render toolbox
         if(toolbox.isVisible()) {
             toolbox.render(g);
         }
 
         bs.show();
-    }
-
-    private BufferedImage[] generateExplosionAnimation() {
-        return new BufferedImage[] {
-                getTexture("explosion0"),
-                getTexture("explosion1"),
-                getTexture("explosion2"),
-                getTexture("explosion3"),
-                getTexture("explosion4"),
-                getTexture("explosion5"),
-                getTexture("explosion6"),
-                getTexture("explosion7"),
-                getTexture("explosion8"),
-                getTexture("explosion9"),
-                getTexture("explosion10"),
-                getTexture("explosion11")
-        };
-    }
-
-
-    private BufferedImage[] getPlayerAnimation() {
-        return new BufferedImage[] {
-			getTexture("player"),
-			getTexture("player_walkA"),
-			getTexture("player_walkB"),
-			getTexture("player_walkC"),
-			getTexture("player_walkD")
-		};
-    }
-
-    private BufferedImage getTexture(String key) {
-        return textureLoader.getTexture(key);
     }
 
     public void run() {
@@ -124,14 +89,43 @@ public class Main extends JFrame implements Runnable {
             lastTime = now;
             while (delta >= 1)//Make sure update is only happening 60 times a second
             {
-                //handles all of the logic restricted time
-				//Update player
-				player.update();
+            	//Update player
+				player.update(delta);
+				Iterator<Block> updateBlocks = blockList.iterator();
+				while(updateBlocks.hasNext()) {
+					Block block = updateBlocks.next();
+					if(block.isExplosive() && block.isExplode()) {
+						Iterator<Block> neighbourBlocks = blockList.iterator();
+						while(neighbourBlocks.hasNext()) {
+							Block neighbourBlock = neighbourBlocks.next();
+							if(neighbourBlock.isExplosive()) {
+								if(neighbourBlock.isNeighbour(block)) {
+									neighbourBlock.explode();
+								}
+							}
+						}
+						if(block.update(delta) == block.getMaxImages()) {
+							updateBlocks.remove();
+						}
+					}
+				}
                 delta--;
             }
             render();//displays to the screen unrestricted time
         }
     }
+
+	private BufferedImage[] generateExplosionAnimation() {
+		return textureLoader.getExplosionAnimation();
+	}
+
+	private BufferedImage[] getPlayerAnimation() {
+		return textureLoader.getPlayerAnimation();
+	}
+
+	private BufferedImage getTexture(String key) {
+		return textureLoader.getTexture(key);
+	}
 
     private synchronized void start() {
         running = true;
@@ -145,7 +139,6 @@ public class Main extends JFrame implements Runnable {
             e.printStackTrace();
         }
     }
-
     public static void main(String[] args) {
         new Main();
     }

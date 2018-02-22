@@ -67,4 +67,31 @@ public class TextureLoader {
         return null;
     }
 
+    public BufferedImage[] getPlayerAnimation() {
+		return new BufferedImage[] {
+				getTexture("player"),
+				getTexture("player_walkA"),
+				getTexture("player_walkB"),
+				getTexture("player_walkC"),
+				getTexture("player_walkD")
+		};
+	}
+
+    public BufferedImage[] getExplosionAnimation() {
+		return new BufferedImage[] {
+				getTexture("explosion0"),
+				getTexture("explosion1"),
+				getTexture("explosion2"),
+				getTexture("explosion3"),
+				getTexture("explosion4"),
+				getTexture("explosion5"),
+				getTexture("explosion6"),
+				getTexture("explosion7"),
+				getTexture("explosion8"),
+				getTexture("explosion9"),
+				getTexture("explosion10"),
+				getTexture("explosion11")
+		};
+	}
+
 }

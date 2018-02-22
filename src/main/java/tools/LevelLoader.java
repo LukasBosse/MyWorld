@@ -25,15 +25,19 @@ public class LevelLoader {
     public List<Block> getLevel() {
 
         BufferedReader br = null;
+		List<String> tmp = new ArrayList<String>();
 
         try {
             br = new BufferedReader(new FileReader(PATH + "/" + "map.txt"));
             String line;
             int lineCounter = 0;
             while ((line = br.readLine()) != null) {
-                generateBlock(line, lineCounter);
-                lineCounter++;
+				tmp.add(line);
             }
+            for(int i = tmp.size()-1; i>=0; i--) {
+				generateBlock(tmp.get(i), lineCounter);
+				lineCounter++;
+			}
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -50,6 +54,10 @@ public class LevelLoader {
             switch(line.charAt(i)) {
                 case '0': {
                     img = textureLoader.getTexture("Grass");
+                    break;
+                }
+                case '1': {
+                	img = textureLoader.getTexture("Coat");
                     break;
                 }
                 default: {

@@ -35,7 +35,7 @@ public class Player extends Entity implements KeyListener, MouseListener {
 	private float jumpPower = 0;
 
 	private BufferedImage[] images;
-    private Block currentPosition;
+	private int currentFrame = 0;
 
     private int mouseX = 0;
     private int mouseY = 0;
@@ -60,18 +60,17 @@ public class Player extends Entity implements KeyListener, MouseListener {
         this.DISPLAY_HEIGHT = DISPLAY_HEIGHT;
         this.toolbox = toolbox;
         this.blockList = blockList;
-		currentPosition = getCurrentPosition();
 		this.y = getGround();
 		this.explosionAnimation = explosionAnimation;
     }
 
     @Override
 	public void render(Graphics g) {
-    	g.drawImage(img, x, y, null);
+    	g.drawImage(images[currentFrame], x, y, null);
 		g.drawString("Stone: " + stone + " | Coat: " + coat + " | TNT: " + tnt + " | Gold: " + gold + " | Grass: " + grass + " | Redstone: " + redstone + " | Leaves: " + leaves, 10,50);
     }
 
-    public void update() {
+    public void update(double delta) {
 
     	//WALKING
     	if(left) {
@@ -85,22 +84,25 @@ public class Player extends Entity implements KeyListener, MouseListener {
         }
 
         if(left || right) {
-    		for(BufferedImage bI : images) {
-				img = bI;
-			}
+    		currentFrame++;
+    		if(currentFrame >= images.length)
+    			currentFrame = 1;
+		} else {
+    		currentFrame = 0;
 		}
 
-
-        currentPosition = getCurrentPosition();
-
-        if(isFalling()) {
-        	for(int i = 0; i < (getGroundDelta()); i++) {
+		int yNew = getGround();
+    	if(yNew == 0) {
+			for(int i = 0; i < 5; i++) {
 				this.y += i;
+				if(this.y > (DISPLAY_WIDTH + getHeight())) {
+					alive = false;
+				}
 			}
+		} else {
+			this.y = getGround();
 		}
-		if(this.y > (DISPLAY_WIDTH + height)) {
-        	alive = false;
-		}
+
 		if(!isAlive()) {
         	System.out.println("- SORRY, YOU ARE DEAD! -");
         	System.exit(0);
@@ -111,7 +113,11 @@ public class Player extends Entity implements KeyListener, MouseListener {
                 while (iter.hasNext()) {
                     Block block = iter.next();
                     if (block.findBlock(mouseX, mouseY) && block.isinDistance(x,y, ALLOWED_DISTANCE)) {
-                    	iter.remove();
+                    	if(block.isExplosive()) {
+                    		block.explode();
+						} else {
+							iter.remove();
+						}
                     	break;
                     }
                 }
@@ -196,44 +202,17 @@ public class Player extends Entity implements KeyListener, MouseListener {
 
 	}
 
-    private Block getCurrentPosition() {
-		Iterator<Block> iter = blockList.iterator();
-		while (iter.hasNext()) {
-			Block block = iter.next();
-			int displayHeight = (DISPLAY_HEIGHT / 80);
-			for(int i = 0; i < displayHeight; i++) {
-				if ((block.getX() / 80) == (x / 80) && ((block.getY() / 80) == (y / 80) + i)) {
-					return block;
+	private int getGround() {
+    	Iterator<Block> bI = blockList.iterator();
+    	while(bI.hasNext()) {
+    		Block b = bI.next();
+				for (int i = 0; i < DISPLAY_HEIGHT; i++) {
+					if(new Rectangle(x,i,width,height).intersects(b.getBounding())) {
+						return b.getY() - b.getHeight() - getHeight();
+					}
 				}
 			}
-		}
-		return null;
-	}
-
-	private int getGround() {
-    	if(currentPosition != null) {
-    		return currentPosition.y - currentPosition.getHeight();
-		}
-		return DISPLAY_HEIGHT-80;
-	}
-
-    private int getGroundDelta() {
-		if(currentPosition != null) {
-			return currentPosition.y - y;
-		}
-		return 4;
-	}
-
-    private boolean isFalling() {
-    	boolean falling = true;
-		Iterator<Block> iter = blockList.iterator();
-		while (iter.hasNext()) {
-			Block block = iter.next();
-			if((block.getX()/80) == (x/80) && ((block.getY()/80) == (y/80)+1)) {
-				falling = false;
-			}
-		}
-		return falling;
+		return 0;
 	}
 
 	private boolean isAlive() {
@@ -243,12 +222,14 @@ public class Player extends Entity implements KeyListener, MouseListener {
     public void keyTyped(KeyEvent e) { }
 
     public void keyPressed(KeyEvent key) {
-        if((key.getKeyCode() == KeyEvent.VK_LEFT) || (key.getKeyCode() == KeyEvent.VK_A))
-            left = true;
+        if((key.getKeyCode() == KeyEvent.VK_LEFT) || (key.getKeyCode() == KeyEvent.VK_A)) {
+			left = true;
 			direction = DIRECTION.LEFT;
-        if((key.getKeyCode() == KeyEvent.VK_RIGHT) || (key.getKeyCode() == KeyEvent.VK_D))
-            right = true;
+		}
+        if((key.getKeyCode() == KeyEvent.VK_RIGHT) || (key.getKeyCode() == KeyEvent.VK_D)) {
+			right = true;
 			direction = DIRECTION.RIGHT;
+		}
         if((key.getKeyCode() == KeyEvent.VK_ESCAPE))
             System.exit(0);
         if((key.getKeyCode() == KeyEvent.VK_B))
@@ -258,12 +239,14 @@ public class Player extends Entity implements KeyListener, MouseListener {
     }
 
     public void keyReleased(KeyEvent key) {
-        if((key.getKeyCode() == KeyEvent.VK_LEFT) || (key.getKeyCode() == KeyEvent.VK_A))
-            left = false;
-            img = images[0];
-        if((key.getKeyCode() == KeyEvent.VK_RIGHT) || (key.getKeyCode() == KeyEvent.VK_D))
-            right = false;
-            img = images[0];
+        if((key.getKeyCode() == KeyEvent.VK_LEFT) || (key.getKeyCode() == KeyEvent.VK_A)) {
+			left = false;
+			img = images[0];
+		}
+        if((key.getKeyCode() == KeyEvent.VK_RIGHT) || (key.getKeyCode() == KeyEvent.VK_D)) {
+			right = false;
+			img = images[0];
+		}
         if((key.getKeyCode() == KeyEvent.VK_SPACE))
 			jump = false;
     }
@@ -289,33 +272,8 @@ public class Player extends Entity implements KeyListener, MouseListener {
             click_Right = false;
     }
 
-	public int getCoat() {
-		return coat;
-	}
-	public int getGold() {
-		return gold;
-	}
-	public int getGrass() {
-		return grass;
-	}
-	public int getLeaves() {
-		return leaves;
-	}
-	public int getRedstone() {
-		return redstone;
-	}
-	public int getStone() {
-		return stone;
-	}
-	public int getTnt() {
-		return tnt;
-	}
+    public void mouseEntered(MouseEvent e) {}
 
-    public void mouseEntered(MouseEvent e) {
+    public void mouseExited(MouseEvent e) {}
 
-    }
-
-    public void mouseExited(MouseEvent e) {
-
-    }
 }
