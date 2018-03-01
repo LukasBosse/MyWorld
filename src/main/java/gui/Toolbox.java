@@ -31,14 +31,16 @@ public class Toolbox extends Entity {
 
         for(int i = 0; i < textureList.length; i++) {
         	Item item;
-        	BufferedImage buffImg = textureLoader.getTexture(textureList[i]);
-        	BufferedImage originImg = textureLoader.getTexture(textureList[i].split("_")[0]);
+			String imgName = textureList[i].split("_")[0];
+			BufferedImage buffImg = textureLoader.getTexture(textureList[i]);
+        	BufferedImage originImg = textureLoader.getTexture(imgName);
         	boolean isExplosiv = textureList[i].equals("Tnt_Icon");
+        	boolean isDirt = textureList[i].equals("Grass_Icon");
 
 			if(i == 0) {
-				item = new Item(x + 3, y + 2, buffImg, originImg, isExplosiv);
+				item = new Item(x + 3, y + 2, buffImg, originImg, isExplosiv,isDirt, imgName);
 			} else {
-				item = new Item(x + (i * buffImg.getWidth() + 3), y + 2,buffImg,originImg, isExplosiv);
+				item = new Item(x + (i * buffImg.getWidth() + 3), y + 2,buffImg,originImg, isExplosiv,isDirt, imgName);
 			}
 			itemList.add(item);
         }

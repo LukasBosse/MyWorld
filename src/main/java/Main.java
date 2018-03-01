@@ -1,6 +1,5 @@
-import entities.Background;
-import entities.Block;
-import entities.Player;
+import entities.*;
+import gui.Menubox;
 import gui.Toolbox;
 import tools.LevelLoader;
 import tools.TextureLoader;
@@ -9,39 +8,50 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 public class Main extends JFrame implements Runnable {
 
+	//Final Settings
     private final String TITLE = "MYWORLD";
     private final String VERSION = "0.0.1 ALPHA";
-
     private final int DISPLAY_WIDTH = 1600;
     private final int DISPLAY_HEIGHT = 900;
-
+    //OS
     private Thread thread;
     private boolean running;
-
+    //Tools
     private TextureLoader textureLoader;
     private LevelLoader levelLoader;
-
+    //Entities
     private Background background;
     private Player player;
     private List<Block> blockList;
-
+    private List<Enemy> enemyList = new LinkedList<Enemy>();
+    private List<Coin> coinList = new ArrayList<Coin>();
+    //Timemanagement
+	private long timeSinceLastEnemy = 0;
+	private long timeSinceLastCoin = 0;
+	private final int ENEMYSPAWNTIME = 10;
+	private final int COINSPAWNTIME = 15;
+	private int lastDirection = 1;
     //GUI
     private Toolbox toolbox;
+    private Menubox menu;
 
     public Main() {
         thread = new Thread(this);
-        textureLoader = new TextureLoader();
+        textureLoader = new TextureLoader("res");
         levelLoader = new LevelLoader(textureLoader, DISPLAY_HEIGHT);
         background = new Background(0,0, getTexture("background"));
         BufferedImage toolboxImg = getTexture("toolbox");
+        BufferedImage menuImg = getTexture("menu");
+        BufferedImage dirtIMG = getTexture("Dirt");
         toolbox = new Toolbox((DISPLAY_WIDTH/2) - (toolboxImg.getWidth()/2),DISPLAY_HEIGHT - (toolboxImg.getHeight()/2) - 35, toolboxImg, false,textureLoader);
-        blockList = levelLoader.getLevel();
-        player = new Player(100, 440, getPlayerAnimation(), DISPLAY_WIDTH, DISPLAY_HEIGHT, toolbox, blockList, generateExplosionAnimation());
+		menu = new Menubox(((DISPLAY_WIDTH/2)-(menuImg.getWidth()/2)), 200, menuImg, textureLoader);
+        blockList = levelLoader.getLevel(0);
+        player = new Player(100, 440, getPlayerAnimation(), DISPLAY_WIDTH, DISPLAY_HEIGHT, toolbox, menu, blockList, dirtIMG, generateExplosionAnimation(), levelLoader, 0);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         addKeyListener(player);
         addMouseListener(player);
@@ -68,13 +78,26 @@ public class Main extends JFrame implements Runnable {
 		while (bI.hasNext()) {
 			bI.next().render(g);
 		}
+		//Render coins
+		Iterator<Coin> cI = coinList.iterator();
+		while(cI.hasNext()) {
+			cI.next().render(g);
+		}
+		//Render enemies
+		Iterator<Enemy> eI = enemyList.iterator();
+		while(eI.hasNext()) {
+			eI.next().render(g);
+		}
         //Render player
         player.render(g);
         //Render toolbox
         if(toolbox.isVisible()) {
             toolbox.render(g);
         }
-
+		//Render menu
+        if(menu.isVisible()) {
+        	menu.render(g);
+		}
         bs.show();
     }
 
@@ -87,20 +110,26 @@ public class Main extends JFrame implements Runnable {
             long now = System.nanoTime();
             delta = delta + ((now-lastTime) / ns);
             lastTime = now;
-            while (delta >= 1)//Make sure update is only happening 60 times a second
+			//Spawn enemys
+			checkEnemySpawnTime(now);
+			//Spawn coins
+			checkCoinSpawnTime(now);
+            while (delta >= 1 && player.isAlive())//Make sure update is only happening 60 times a second
             {
             	//Update player
-				player.update(delta);
+				player.update(coinList, enemyList);
 				Iterator<Block> updateBlocks = blockList.iterator();
 				while(updateBlocks.hasNext()) {
 					Block block = updateBlocks.next();
+					checkAttack(block);
+					if(!block.isAlive()) updateBlocks.remove();
 					if(block.isExplosive() && block.isExplode()) {
-						Iterator<Block> neighbourBlocks = blockList.iterator();
-						while(neighbourBlocks.hasNext()) {
-							Block neighbourBlock = neighbourBlocks.next();
-							if(neighbourBlock.isExplosive()) {
-								if(neighbourBlock.isNeighbour(block)) {
+						for(Block neighbourBlock : blockList) {
+							if(neighbourBlock.isNeighbour(block)) {
+								if(neighbourBlock.isExplosive()) {
 									neighbourBlock.explode();
+								} else {
+									neighbourBlock.setInExplosionRange(true);
 								}
 							}
 						}
@@ -108,12 +137,74 @@ public class Main extends JFrame implements Runnable {
 							updateBlocks.remove();
 						}
 					}
+					if(block.isInExplosionRange()) {
+						updateBlocks.remove();
+					}
+				}
+				//Update enemies
+				Iterator<Enemy> eI = enemyList.iterator();
+				while(eI.hasNext()) {
+					Enemy e = eI.next();
+					if(e.getX() > player.getX()) e.update(-1, blockList, DISPLAY_HEIGHT);
+					if(e.getX() < player.getX()) e.update(1, blockList, DISPLAY_HEIGHT);
+					if(e.isAttackedOnHead(player.getBounding())) eI.remove();
+				}
+				//Update coins
+				Iterator<Coin> cI = coinList.iterator();
+				while(cI.hasNext()) {
+					cI.next().update(blockList);
 				}
                 delta--;
             }
             render();//displays to the screen unrestricted time
         }
     }
+
+    private void checkAttack(Block block) {
+    	Iterator<Enemy> eI = enemyList.iterator();
+    	while(eI.hasNext()) {
+    		Enemy e = eI.next();
+    		if(block.isOnAttack(e.getBounding())) {
+				e.jumpBack();
+			}
+		}
+	}
+
+    private void checkCoinSpawnTime(long now) {
+		if((now-timeSinceLastCoin)/1000000000 >= COINSPAWNTIME) {
+			coinList.add(new Coin(generateRandomXCoords(),0, getTexture("coin"), blockList, DISPLAY_HEIGHT));
+			timeSinceLastCoin = now;
+		}
+	}
+
+	private void checkEnemySpawnTime(long now) {
+		if((now-timeSinceLastEnemy)/1000000000 >= ENEMYSPAWNTIME) {
+			enemyList.add(new Enemy(generateEnemyXCoords(), 200, getEnemyAnimation(),blockList));
+			timeSinceLastEnemy = now;
+		}
+	}
+
+	private int generateEnemyXCoords() {
+		lastDirection = lastDirection * -1;
+		if(lastDirection == 1) {
+			return DISPLAY_WIDTH + 50;
+		} else {
+			return -50;
+		}
+	}
+
+	private int generateRandomXCoords() {
+		Random rand = new Random();
+		int random = rand.nextInt(DISPLAY_WIDTH);
+		if(!player.getBounding().contains(random, player.getY())) {
+			return random;
+		}
+		return generateRandomXCoords();
+    }
+
+	private BufferedImage[] getEnemyAnimation() {
+    	return textureLoader.getEnemyAnimation();
+	}
 
 	private BufferedImage[] generateExplosionAnimation() {
 		return textureLoader.getExplosionAnimation();
@@ -131,6 +222,7 @@ public class Main extends JFrame implements Runnable {
         running = true;
         thread.start();
     }
+
     public synchronized void stop() {
         running = false;
         try {
@@ -139,9 +231,9 @@ public class Main extends JFrame implements Runnable {
             e.printStackTrace();
         }
     }
+
     public static void main(String[] args) {
         new Main();
     }
-
 
 }

@@ -8,51 +8,49 @@ import java.util.HashMap;
 
 public class TextureLoader {
 
-    private final String PATH = "res";
     private HashMap<String, BufferedImage> textures = new HashMap<String, BufferedImage>();
-    private final String[] texturePaths = {
-            "background",
-            "Grass",
-            "player",
-            "player_walkA",
-            "player_walkB",
-			"player_walkC",
-			"player_walkD",
-            "toolbox",
-            "Grass_Icon",
-            "Gold_Icon",
-			"Tnt_Icon",
-			"Redstone_Icon",
-			"Coat_Icon",
-			"Stone_Icon",
-			"Leaves_Icon",
-			"Wood_Icon",
-			"Gold",
-			"Tnt",
-			"Redstone",
-			"Coat",
-			"Stone",
-			"Leaves",
-			"Wood",
-			"explosion0",
-			"explosion1",
-			"explosion2",
-			"explosion3",
-			"explosion4",
-			"explosion5",
-			"explosion6",
-			"explosion7",
-			"explosion8",
-			"explosion9",
-			"explosion10",
-			"explosion11"
-    };
 
-    public TextureLoader() {
-        for(String s : texturePaths) {
-            textures.put(s, loadTexture(PATH + "/" + s + ".png"));
-        }
+    public TextureLoader(String path) {
+    	initTextures(path);
     }
+
+    private void initTextures(String path) {
+		File folder = new File(path);
+		File[] listOfFiles = folder.listFiles();
+		for (File file : listOfFiles) {
+			if (file.isFile()) {
+				textures.put(file.getName().replace(".png","").replace(".PNG",""), loadTexture(file.getAbsolutePath()));
+			} else if(file.isDirectory()) {
+				initTextures(file.getAbsolutePath());
+			}
+		}
+	}
+
+	public int getTextureID(String imgName) {
+		if(imgName.equals("Grass")) return 0;
+		if(imgName.equals("Dirt")) return 1;
+		if(imgName.equals("Coat")) return 2;
+		if(imgName.equals("Tnt")) return 3;
+		if(imgName.equals("Gold")) return 4;
+		if(imgName.equals("Leaves")) return 5;
+		if(imgName.equals("Redstone")) return 6;
+		if(imgName.equals("Stone")) return 7;
+		if(imgName.equals("Wood")) return 8;
+		return 0;
+	}
+
+	public String getTexture(char i) {
+		if(i == '0') return "Grass";
+		if(i == '1') return "Dirt";
+		if(i == '2') return "Coat";
+		if(i == '3') return "Tnt";
+		if(i == '4') return "Gold";
+		if(i == '5') return "Leaves";
+		if(i == '6') return "Redstone";
+		if(i == '7') return "Stone";
+		if(i == '8') return "Wood";
+		return "Grass";
+	}
 
     public BufferedImage getTexture(String key) {
         return textures.get(key);
@@ -69,11 +67,16 @@ public class TextureLoader {
 
     public BufferedImage[] getPlayerAnimation() {
 		return new BufferedImage[] {
-				getTexture("player"),
-				getTexture("player_walkA"),
-				getTexture("player_walkB"),
-				getTexture("player_walkC"),
-				getTexture("player_walkD")
+				getTexture("player_0"),
+				getTexture("player_1"),
+				getTexture("player_2"),
+				getTexture("player_3"),
+				getTexture("player_4"),
+				getTexture("player_5"),
+				getTexture("player_6"),
+				getTexture("player_7"),
+				getTexture("player_8"),
+				getTexture("player_9")
 		};
 	}
 
@@ -94,4 +97,14 @@ public class TextureLoader {
 		};
 	}
 
+	public BufferedImage[] getEnemyAnimation() {
+		return new BufferedImage[] {
+				getTexture("enemy_0"),
+				getTexture("enemy_1"),
+				getTexture("enemy_2"),
+				getTexture("enemy_3"),
+				getTexture("enemy_4"),
+				getTexture("enemy_5")
+		};
+	}
 }

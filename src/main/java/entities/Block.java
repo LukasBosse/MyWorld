@@ -7,16 +7,22 @@ public class Block extends Entity {
 
     private boolean explosive;
     private boolean explode = false;
-    private BufferedImage[] explosion;
+    private boolean inExplosionRange = false;
     private int currentFrame = 0;
     private int positionX;
-    private int positionY;
+    private boolean isDirt;
+    private BufferedImage dirtImg;
+    private BufferedImage[] explosion;
+    private String imageName;
+    private int health = 5;
 
-    public Block(int x, int y, BufferedImage img, boolean explosive, BufferedImage[] explosion) {
+	public Block(int x, int y, BufferedImage img, boolean explosive, BufferedImage[] explosion, boolean isDirt, BufferedImage dirt, String imgName) {
         super(x, y, img);
         this.positionX = x/width;
-        this.positionY = y/height;
         this.explosive = explosive;
+        this.isDirt = isDirt;
+        this.dirtImg = dirt;
+        this.imageName = imgName;
         if(explosive && explosion != null) {
         	this.explosion = explosion;
 		}
@@ -29,6 +35,8 @@ public class Block extends Entity {
 			g.drawImage(explosion[currentFrame], getX(), getY(), null);
 		}
 	}
+
+	public String getImageName() { return imageName; }
 
 	public int getMaxImages() {
     	return explosion.length;
@@ -48,8 +56,14 @@ public class Block extends Entity {
 		return false;
 	}
 
-	public boolean isBelow(int x, int y) {
-		if((this.y/height) - (y/height) < 2) {
+	public boolean isAlive() {
+		if(health <= 0) return false;
+		return true;
+	}
+
+	public boolean isOnAttack(Rectangle bounding) {
+		if(this.bounding.intersects(bounding)) {
+			health--;
 			return true;
 		}
 		return false;
@@ -79,6 +93,12 @@ public class Block extends Entity {
         return false;
     }
 
+    public void toggleDirt() {
+		if(null != dirtImg) {
+			img = dirtImg;
+		}
+	}
+
     public boolean isExplode() {
     	return explode;
 	}
@@ -91,8 +111,16 @@ public class Block extends Entity {
     	return positionX;
     }
 
-    public int getPositionY() {
-    	return positionY;
+	public boolean isInExplosionRange() {
+		return inExplosionRange;
+	}
+
+	public void setInExplosionRange(boolean inExplosionRange) {
+		this.inExplosionRange = inExplosionRange;
+	}
+
+	public boolean isDirt() {
+		return isDirt;
 	}
 
 }
