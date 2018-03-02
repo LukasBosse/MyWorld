@@ -1,10 +1,9 @@
 package entities;
 
-import gui.Item;
+import gui.*;
 import gui.MenuItem;
-import gui.Menubox;
-import gui.Toolbox;
 import tools.LevelLoader;
+import tools.TextureLoader;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,20 +44,25 @@ public class Player extends Entity implements KeyListener, MouseListener {
 	private int mouseY = 0;
 
 	//Stats
-	private String name = "John Doe";
+	private final String highscoreFile = "res/Stats/Highscores.txt";
+	private String nickName = "John Doe";
 	private int gold = 0;
 	private int health = 5;
 
 	private LevelLoader levelLoader;
+	private TextureLoader textureLoader;
 	private Toolbox toolbox;
 	private Menubox menubox;
+	private Highscores highscores;
 	private List<Block> blockList;
 	private BufferedImage[] explosionAnimation;
 	private BufferedImage dirtIMG;
+	private BufferedImage health_icon;
+	private BufferedImage coin_icon;
 	private Item selectedItem;
 
 	public Player(int x, int y, BufferedImage[] images, int DISPLAY_WIDTH, int DISPLAY_HEIGHT, Toolbox toolbox, Menubox menubox, List<Block> blockList, BufferedImage dirtIMG,
-			BufferedImage[] explosionAnimation, LevelLoader levelLoader, int currentLevel) {
+			BufferedImage[] explosionAnimation, LevelLoader levelLoader, int currentLevel, Highscores highscores, TextureLoader textureLoader) {
 		super(x, y, images[0]);
 		this.images = images;
 		this.currentLevel = currentLevel;
@@ -66,17 +70,25 @@ public class Player extends Entity implements KeyListener, MouseListener {
 		this.DISPLAY_HEIGHT = DISPLAY_HEIGHT;
 		this.toolbox = toolbox;
 		this.menubox = menubox;
+		this.highscores = highscores;
+		this.textureLoader = textureLoader;
 		this.blockList = blockList;
 		this.levelLoader = levelLoader;
 		this.y = getGround(this.x, blockList);
 		this.dirtIMG = dirtIMG;
 		this.explosionAnimation = explosionAnimation;
+		this.health_icon = textureLoader.getTexture("health_icon");
+		this.coin_icon = textureLoader.getTexture("coin_icon");
 	}
 
 	@Override
 	public void render(Graphics g) {
 		g.drawImage(images[currentFrame], x, y, null);
-		g.drawString("Leben: " + health + " | Münzen: " + gold, 10, 50);
+		for(int i = 0; i < health; i++) {
+			g.drawImage(health_icon, 10 + (health_icon.getWidth() * i), 40, null);
+		}
+		g.drawImage(coin_icon, 15 + (health * health_icon.getWidth()), 40, null);
+		g.drawString("" + gold, 30 + (health * health_icon.getWidth() + coin_icon.getWidth()), 45 + coin_icon.getHeight()/2);
 	}
 
 	public void update(List<Coin> coinList, List<Enemy> enemyList) {
@@ -128,6 +140,8 @@ public class Player extends Entity implements KeyListener, MouseListener {
 			selectMenuItem();
 			//Select and build block
 			buildBlock();
+			//Close window
+			isClosingHighscores();
 		}
 
 		this.bounding.x = x;
@@ -137,19 +151,19 @@ public class Player extends Entity implements KeyListener, MouseListener {
 
 	private void playDeathAnimation() {
 		writeHighscore();
+		highscores.setVisible();
 	}
 
 	private void writeHighscore() {
-		String fileName = "res/Stats/Highscores.txt";
 		PrintWriter printWriter = null;
-		File file = new File(fileName);
+		File file = new File(highscoreFile);
 		try {
 			if (!file.exists()) file.createNewFile();
-			printWriter = new PrintWriter(new FileOutputStream(fileName, true));
-			if(isFileEmpty(fileName)) {
+			printWriter = new PrintWriter(new FileOutputStream(highscoreFile, true));
+			if(isFileEmpty(highscoreFile)) {
 				printWriter.write(getName() + "|" + getCoins());
 			} else {
-				printWriter.write(System.getProperty("line.separator") + getName() + "|" + getCoins());
+				printWriter.write(System.getProperty("line.separator") + getName() + " | " + getCoins());
 			}
 		} catch (IOException ioex) {
 			ioex.printStackTrace();
@@ -200,6 +214,13 @@ public class Player extends Entity implements KeyListener, MouseListener {
 					break;
 				}
 			}
+		}
+	}
+
+	private void isClosingHighscores() {
+		//Update highscores
+		if(highscores.isVisible()) {
+			highscores.isClosing(mouseX, mouseY);
 		}
 	}
 
@@ -255,9 +276,15 @@ public class Player extends Entity implements KeyListener, MouseListener {
 		//Check for collision with coins
 		Iterator<Coin> cI = coinList.iterator();
 		while(cI.hasNext()) {
-			if(cI.next().getBounding().intersects(this.getBounding())) {
-				cI.remove();
+			Coin coin = cI.next();
+			if(coin.getBounding().intersects(this.getBounding())) {
+				coin.setDying();
 				gold++;
+			}
+			if(coin.isDying()) {
+				if (coin.update() >= coin.getAnimationSize()) {
+					cI.remove();
+				}
 			}
 		}
 
@@ -329,7 +356,7 @@ public class Player extends Entity implements KeyListener, MouseListener {
 		}
 	}
 
-	public String getName() { return name; }
+	public String getName() { return nickName; }
 
 	public int getCoins() { return gold; }
 

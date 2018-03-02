@@ -1,4 +1,5 @@
 import entities.*;
+import gui.Highscores;
 import gui.Menubox;
 import gui.Toolbox;
 import tools.LevelLoader;
@@ -39,6 +40,7 @@ public class Main extends JFrame implements Runnable {
     //GUI
     private Toolbox toolbox;
     private Menubox menu;
+    private Highscores highscores;
 
     public Main() {
         thread = new Thread(this);
@@ -49,9 +51,10 @@ public class Main extends JFrame implements Runnable {
         BufferedImage menuImg = getTexture("menu");
         BufferedImage dirtIMG = getTexture("Dirt");
         toolbox = new Toolbox((DISPLAY_WIDTH/2) - (toolboxImg.getWidth()/2),DISPLAY_HEIGHT - (toolboxImg.getHeight()/2) - 35, toolboxImg, false,textureLoader);
-		menu = new Menubox(((DISPLAY_WIDTH/2)-(menuImg.getWidth()/2)), 200, menuImg, textureLoader);
+		highscores = new Highscores(((DISPLAY_WIDTH/2)-(menuImg.getWidth()/2)), 200, menuImg, getTexture("btn_closeWindow"));
+		menu = new Menubox(((DISPLAY_WIDTH/2)-(menuImg.getWidth()/2)), 200, menuImg, textureLoader, highscores);
         blockList = levelLoader.getLevel(0);
-        player = new Player(100, 440, getPlayerAnimation(), DISPLAY_WIDTH, DISPLAY_HEIGHT, toolbox, menu, blockList, dirtIMG, generateExplosionAnimation(), levelLoader, 0);
+		player = new Player(100, 440, getPlayerAnimation(), DISPLAY_WIDTH, DISPLAY_HEIGHT, toolbox, menu, blockList, dirtIMG, generateExplosionAnimation(), levelLoader, 0, highscores, textureLoader);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         addKeyListener(player);
         addMouseListener(player);
@@ -97,6 +100,10 @@ public class Main extends JFrame implements Runnable {
 		//Render menu
         if(menu.isVisible()) {
         	menu.render(g);
+		}
+		//Render highscores
+		if(highscores.isVisible()) {
+        	highscores.render(g);
 		}
         bs.show();
     }
@@ -145,6 +152,8 @@ public class Main extends JFrame implements Runnable {
 				Iterator<Enemy> eI = enemyList.iterator();
 				while(eI.hasNext()) {
 					Enemy e = eI.next();
+					if(!e.isAlive()) eI.remove();
+					e.inNearOfExplosion(blockList);
 					if(e.getX() > player.getX()) e.update(-1, blockList, DISPLAY_HEIGHT);
 					if(e.getX() < player.getX()) e.update(1, blockList, DISPLAY_HEIGHT);
 					if(e.isAttackedOnHead(player.getBounding())) eI.remove();
@@ -172,7 +181,7 @@ public class Main extends JFrame implements Runnable {
 
     private void checkCoinSpawnTime(long now) {
 		if((now-timeSinceLastCoin)/1000000000 >= COINSPAWNTIME) {
-			coinList.add(new Coin(generateRandomXCoords(),0, getTexture("coin"), blockList, DISPLAY_HEIGHT));
+			coinList.add(new Coin(generateRandomXCoords(),0, getTexture("coin"), blockList, DISPLAY_HEIGHT, getCoinAnimation()));
 			timeSinceLastCoin = now;
 		}
 	}
@@ -201,6 +210,10 @@ public class Main extends JFrame implements Runnable {
 		}
 		return generateRandomXCoords();
     }
+
+    private BufferedImage[] getCoinAnimation() {
+    	return textureLoader.getCoinAnimation();
+	}
 
 	private BufferedImage[] getEnemyAnimation() {
     	return textureLoader.getEnemyAnimation();

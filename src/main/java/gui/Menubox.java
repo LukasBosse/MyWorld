@@ -19,7 +19,7 @@ public class Menubox extends Entity {
 			"btn_close"
 	};
 
-	public Menubox(int x, int y, BufferedImage img, TextureLoader textureLoader) {
+	public Menubox(int x, int y, BufferedImage img, TextureLoader textureLoader, Highscores highscores) {
 
 		super(x, y, img);
 		this.textureLoader = textureLoader;
@@ -30,11 +30,11 @@ public class Menubox extends Entity {
 			BufferedImage itemImage = textureLoader.getTexture(textureList[i]);
 
 			if(i == 0) {
-				item = new MenuItem(x+3, y+3, itemImage,i);
+				item = new MenuItem(x+3, y+3, itemImage,i, highscores,this);
 			} else if(i == 1) {
-				item = new MenuItem(x+3, y + (itemImage.getHeight()*i), itemImage,i);
+				item = new MenuItem(x+3, y + (itemImage.getHeight()*i), itemImage,i,highscores,this);
 			} else if(i == 2) {
-				item = new MenuItem(x+3, y - 1 + (itemImage.getHeight()*i), itemImage,i);
+				item = new MenuItem(x+3, y - 1 + (itemImage.getHeight()*i), itemImage,i, highscores, this);
 			}
 			menuItemList.add(item);
 		}

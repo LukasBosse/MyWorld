@@ -41,6 +41,23 @@ public class Entity {
         return 0;
     }
 
+    public void inNearOfExplosion(List<Block> blockList) {
+        Iterator<Block> iB = blockList.iterator();
+        while(iB.hasNext()) {
+            Block b = iB.next();
+            if(b.isExplosive() && b.isExplode()) {
+                if(b.isinDistance(x,y,2)) {
+                    b.addVictim(this);
+                    break;
+                }
+            }
+        }
+     }
+
+     public void die() {
+    	this.alive = false;
+	 }
+
     public void adjustY(Entity e, List<Block> blockList, int DISPLAY_HEIGHT) {
         int yNew = getGround(e.getX(), blockList);
         int groundDelta = yNew - e.getY();

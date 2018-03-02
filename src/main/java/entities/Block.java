@@ -2,6 +2,8 @@ package entities;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Block extends Entity {
 
@@ -13,6 +15,7 @@ public class Block extends Entity {
     private boolean isDirt;
     private BufferedImage dirtImg;
     private BufferedImage[] explosion;
+    private List<Entity> victimList = new ArrayList<Entity>();
     private String imageName;
     private int health = 5;
 
@@ -33,7 +36,20 @@ public class Block extends Entity {
     	g.drawImage(getImg(), getX(), getY(), null);
     	if(explosion != null && explosive && explode) {
 			g.drawImage(explosion[currentFrame], getX(), getY(), null);
+			if(currentFrame >= explosion.length - 1) {
+				killVictims();
+			}
 		}
+	}
+
+	private void killVictims() {
+		for(Entity e : victimList) {
+			e.die();
+		}
+	}
+
+	public void addVictim(Entity e) {
+		victimList.add(e);
 	}
 
 	public String getImageName() { return imageName; }
@@ -86,7 +102,6 @@ public class Block extends Entity {
     }
 
     public boolean isinDistance(int x, int y, int allowedDistance) {
-       // (block.getX() / 80) - (x/80)) < ALLOWED_DISTANCE || ((block.getX() / 80) - (x/80)) < ALLOWED_DISTANCE
         if((((getX()/width) - (x/width)) < allowedDistance) || (((getX()/width) - (getX() - x/width)) < allowedDistance)) {
             return true;
         }

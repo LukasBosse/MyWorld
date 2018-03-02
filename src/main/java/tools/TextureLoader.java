@@ -107,4 +107,13 @@ public class TextureLoader {
 				getTexture("enemy_5")
 		};
 	}
+
+	public BufferedImage[] getCoinAnimation() {
+		return new BufferedImage[] {
+				getTexture("coin_0"),
+				getTexture("coin_1"),
+				getTexture("coin_2"),
+				getTexture("coin_3")
+		};
+	}
 }
